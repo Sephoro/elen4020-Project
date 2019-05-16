@@ -1,0 +1,4 @@
+hexdump -v -e '7/4 "%10d "' -e '"\n"' filename
+
+
+
