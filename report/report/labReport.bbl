@@ -1,0 +1,30 @@
+\begin{thebibliography}{1}
+
+\bibitem{gropp2014using}
+W.~Gropp, T.~Hoefler, R.~Thakur, and E.~Lusk, {\em Using advanced MPI: Modern
+  features of the message-passing interface}.
+\newblock MIT Press, 2014.
+
+\bibitem{10.1007/978-3-540-69389-5_29}
+R.~Preissl, M.~Schulz, D.~Kranzlm{\"u}ller, B.~R. de~Supinski, and D.~J.
+  Quinlan, ``Using mpi communication patterns to guide source code
+  transformations,'' in {\em Computational Science -- ICCS 2008} (M.~Bubak,
+  G.~D. van Albada, J.~Dongarra, and P.~M.~A. Sloot, eds.), (Berlin,
+  Heidelberg), pp.~253--260, Springer Berlin Heidelberg, 2008.
+
+\bibitem{otto}
+P.~E.~J. Otoo, ``Elen4020a: Data intensive computing course project (simplified
+  alternative): Matrix transposition of big-data,'' project brief, University
+  of the Witwatersrand, may 2019.
+
+\bibitem{1}
+DeinoMPI, ``Mpi\_alltoall.''
+  \url{http://mpi.deino.net/mpi\_functions/MPI\_Alltoall.htm}, 2009.
+\newblock Last accessed: 2019-05-16.
+
+\bibitem{2}
+CodinGame, ``Introduction to mpi.''
+  \url{https://www.codingame.com/playgrounds/349/introduction-to-mpi/mpi\_comm\_world-size-and-ranks}.
+\newblock Last accessed: 2019-05-16.
+
+\end{thebibliography}
