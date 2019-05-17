@@ -9,3 +9,7 @@ A Big Data Project on Matrix Transposition using Message Passing Interface(MPI)
 #### To run matrix transposition mpicc -o mpiMatroxTranspose mpiMatrixTranspose.c
 #### To compile  first run mpiMatrixGenerate.c to generate the input files,
 #### then mpiexec -n numprocessors ./mpiMatroxTranspose inputfile outputfile
+
+**************PLEASE NOTE*********************************
+
+### THE PROJECT REPORT IS UNDER THE REPORT FOLDER, AS A PDF.
