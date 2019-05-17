@@ -1,8 +1,37 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <mpi.h>
+#include <string.h>
 
+// To be used later
 int  n =  256;
 int  m =  64;
+
+
+
+void localTrans (int *a, int n)
+
+{
+  int i, j;
+  int ij, ji, l;
+  double tmp;
+  ij = 0;
+  l = -1;
+  for (i = 0; i < n; i++)
+    {
+      l += n + 1;
+      ji = l;
+      ij += i + 1;
+      for (j = i+1; j < n; j++)
+	{
+	  tmp = a[ij];
+	  a[ij] = a[ji];
+	  a[ji] = tmp;
+	  ij++;
+	  ji += n;
+	}
+    }
+}
 
 
 // Swap values
@@ -14,7 +43,7 @@ void swap(int *a, int *b){
 }
 
 // Local Transpose
-void localTrans(int a[n][m]){
+void local_Trans(int a[n][m]){
 
    int otherRow = 0;
    int otherCol = 0;
@@ -48,30 +77,79 @@ void localTrans(int a[n][m]){
   }
 }
 
+int main(int argc, char** argv){
 
-int main (int argc, char *argv[])
-{
+        // Input and Output files
 
+        char *in = argv [1];
+        char *out = argv[2];
 
-  int b = n/m;
+        // setup
+        int rank, numProcs;
+        int inputError;
+        int SIZE;
+        int *sizeChecker;
+        int *tempBuffer;
+        int n;
+
+        // Initialize MPI
+        MPI_Init(&argc, &argv);
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+        // MPI setup
+        MPI_File fh;
+        MPI_Win win;
+        MPI_Status status;
+        MPI_Offset disp;
+        MPI_Offset blockSize;
+
+        // Open file
+        inputError = MPI_File_open(MPI_COMM_WORLD, in, MPI_MODE_RDONLY,MPI_INFO_NULL,&fh);
+
+        // File succesfully opened?
+
+	 if(inputError){
+
+                if (rank == 0) printf("Error! %s: Couldn't open file %s\n", argv[0], argv[1]);
+                MPI_Finalize();
+                exit(1);
+        }
+
+        // Get the size of the matrix
+        sizeChecker = (int*)malloc(sizeof(int));
+        MPI_File_read(fh, sizeChecker, 1, MPI_INT, &status);
+        SIZE = sizeChecker[0];
+
+       free(sizeChecker);
+
+        n = (int)(SIZE/numProcs);
+
+        // Condition the buffer for each rank
+        blockSize = SIZE*n;
+        disp = ((rank*blockSize)+1)*sizeof(int);
+        tempBuffer = (int*)malloc(SIZE*n*sizeof(int));
+
+        // Read the file into the buffer
+        MPI_File_set_view(fh, disp, MPI_INT, MPI_INT,"native",MPI_INFO_NULL);
+        MPI_File_read(fh,tempBuffer,blockSize,MPI_INT, &status);
+        MPI_File_close(&fh);
+  
+  n = SIZE;
+  m = blockSize/SIZE;
+  int b = numProcs;
+
+  // Transposition
 
   int inputMatrix[n][m];
   int outputMatrix[n][m];
-
-  int i, j, nprocs, rank;
-
-  MPI_Init (&argc, &argv);
-  MPI_Comm_size (MPI_COMM_WORLD, &nprocs);
-  MPI_Comm_rank (MPI_COMM_WORLD, &rank);
-
-  printf("%d\n", nprocs);
 
   if(rank == 0)
   {
     printf("Transposing\n");
   }
 
-  if (nprocs != b)
+  if (numProcs != b)
    {
      if (rank == 0)
         printf ("Error, number of processes must be %d for %d x %d  divided matrix transposition of %d x %d \n", b,n,m,n,n);
@@ -80,34 +158,54 @@ int main (int argc, char *argv[])
       return 1;
     }
 
-  for (i = 0; i < n; i++)
-    for (j = 0; j < m; j++)
-      inputMatrix[i][j] = i + n*(j+1)*(rank);
+  for (int i = 0; i < n; i++)
+    for (int j = 0; j < m; j++)
+      inputMatrix[i][j] = tempBuffer[j + i*m];
+
+// Block Transpose
+ MPI_Alltoall (&inputMatrix[0][0],m * m,MPI_INT,&outputMatrix[0][0],m * m, MPI_INT, MPI_COMM_WORLD);
 
 
-  for(int i =0; i < n; i++){
+ for (int i = 0; i < b; i++)
+	 localTrans (&outputMatrix[i * m][0], m);
 
-          for(int j = 0; j < m; j++){
-
-                printf("A{%d}==>%d<==[%i, %i]\n", rank, inputMatrix[i][j], i, j);
-          }
-
+// Write results to file
+  
+  
+  for(int i = 0; i < n; i++){
+  
+	  for(int j =0; j < m; j++){
+                  
+		  if(i != 0 && j != 0)
+	      	     tempBuffer[j + i*m] = outputMatrix[i][j];
+	  }
   }
 
 
-  MPI_Alltoall (&inputMatrix[0][0],m * m,MPI_INT,&outputMatrix[0][0],m * m, MPI_INT, MPI_COMM_WORLD);
+  inputError = MPI_File_open(MPI_COMM_WORLD,out, MPI_MODE_WRONLY| MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+  
 
-  localTrans(outputMatrix);
+    if(inputError){
 
-  for(int i =0; i < n; i++){
+                if (rank == 0) printf("Error! %s: Couldn't open file %s\n", argv[0], argv[2]);
+                MPI_Finalize();
+                exit(2);
+        }
 
-          for(int j = 0; j < m; j++){
+ 
+ 
+   MPI_File_set_view(fh, disp, MPI_INT, MPI_INT,"native",MPI_INFO_NULL);
 
-                printf("B{%d}==>%d<==[%i, %i]\n", rank, outputMatrix[i][j], i, j);
-          }
 
-  }
+  if(rank = 0)
+  	MPI_File_write(fh, tempBuffer,blockSize, MPI_INT,&status);
+  else
+	  MPI_File_write_all(fh, tempBuffer,blockSize, MPI_INT,&status);
 
+  
+  free(tempBuffer);
+
+  MPI_File_close(&fh);
 
   if (rank == 0)
     printf ("Transpose seems ok\n");
@@ -116,4 +214,3 @@ int main (int argc, char *argv[])
 
 return 0;
 }
-
