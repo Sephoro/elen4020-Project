@@ -12,13 +12,17 @@ void randomNumberGenerator(int* numbuffer, int N)
 		 ++numbuffer;
 	}
 }
+
 int main( int argc, char *argv[] )
-{
-	  int numberOferrs = 0, error;
+{    
+    struct timeval start, end;
+    gettimeofday(&start,NULL);
+
+    int numberOferrs = 0, error;
     int size, process_rank, *randomNumbersBuffer;
     
     int n[5]= {8, 16, 32, 64, 128};
-		char nsize[30];
+    char nsize[30];
     
     MPI_File filehandler;
     MPI_Status status;    
@@ -26,9 +30,11 @@ int main( int argc, char *argv[] )
 
     comm = MPI_COMM_WORLD;
     MPI_Init( &argc, &argv);
+    //start timer
+    
     
     for(int i = 0; i < 5; i++)
-    	{
+    	{ 
     				char* file_name = "file_";
 						int Dimension = n[i];
 			
@@ -66,7 +72,7 @@ int main( int argc, char *argv[] )
 								// Write to file:
 		  					// Create the offset based on rank:
 		  					offset = ((process_rank*chunk_memory)+1 )*sizeof(int); // start of the view for each processor
-			
+			                                
 		  					MPI_File_set_view(filehandler, offset, MPI_INT, MPI_INT, "native", MPI_INFO_NULL );
 		  					error = MPI_File_write_all(filehandler, randomNumbersBuffer, chunk_memory, MPI_INT, &status );
 		  					if (error) { numberOferrs++; }
@@ -74,6 +80,13 @@ int main( int argc, char *argv[] )
 		  					error = MPI_File_close( &filehandler);
 		  					if (error) { numberOferrs++; }
     			
+
+      gettimeofday(&end, NULL);
+
+      double duration = (end.tv_sec - start.tv_sec) * 1e6;
+      duration = (duration + (end.tv_usec - start.tv_usec)) * 1e-6;
+      printf("%i t = %7f seconds\n size of Matrix = ", Dimension, duration);
+
     			
     	}
     	

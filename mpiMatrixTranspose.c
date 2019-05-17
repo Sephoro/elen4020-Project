@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include <string.h>
+#include <time.h>
 
 // To be used later
 int  n =  256;
@@ -79,8 +80,13 @@ void local_Trans(int a[n][m]){
 
 int main(int argc, char** argv){
 
+         /* Start timer */
+            struct timeval start, end;
+            gettimeofday(&start,NULL);
+         /* Timer */
+        
         // Input and Output files
-
+        
         char *in = argv [1];
         char *out = argv[2];
 
@@ -146,7 +152,7 @@ int main(int argc, char** argv){
 
   if(rank == 0)
   {
-    printf("Transposing\n");
+   // printf("Transposing\n");
   }
 
   if (numProcs != b)
@@ -202,15 +208,23 @@ int main(int argc, char** argv){
   else
 	  MPI_File_write_all(fh, tempBuffer,blockSize, MPI_INT,&status);
 
-  
+  /* Stop Timer */
+  gettimeofday(&end, NULL);
+ 
+
   free(tempBuffer);
 
   MPI_File_close(&fh);
 
   if (rank == 0)
-    printf ("Transpose seems ok\n");
+   // printf ("Transpose seems ok\n");
 
   MPI_Finalize ();
 
+  /*Time duration*/
+
+  float duration = (end.tv_sec -start.tv_sec) * 1e6;
+  duration = (duration + (end.tv_sec -start.tv_sec)) * 1e-6;
+  printf("Size of matrix : %d x %d\nt = %7f seconds \n", SIZE, SIZE, duration);
 return 0;
 }
